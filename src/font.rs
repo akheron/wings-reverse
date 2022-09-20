@@ -1,8 +1,11 @@
+use image::{Rgb, RgbImage};
 use nom::bytes::complete::take;
 use nom::combinator::all_consuming;
 use nom::multi::count;
 use nom::number::complete::le_u16;
 use nom::IResult;
+use std::ffi::OsStr;
+use std::fs::File;
 use std::io::Read;
 
 #[derive(Debug)]
@@ -73,9 +76,48 @@ fn parse_glyph(input: &[u8]) -> IResult<&[u8], Glyph> {
     ))
 }
 
-pub fn load_font<T: Read>(mut input: T) -> Option<Font> {
+fn load_font<T: Read>(mut input: T) -> Option<Font> {
     let mut data = Vec::new();
     input.read_to_end(&mut data).ok()?;
     let (_, font) = parse_font(&data).ok()?;
     Some(font)
+}
+
+fn generate_image(font: &Font) -> RgbImage {
+    assert_eq!(
+        font.num_glyphs(),
+        16 * 16,
+        "assumed 16 * 16 = 256 font glyphs"
+    );
+
+    let glyph_width = font.glyph_width;
+    let glyph_height = font.glyph_height;
+    let mut image = RgbImage::new(glyph_width * 16, glyph_height * 16);
+
+    // 16 * 16 = 256
+    let mut glyph_index: usize = 0;
+    for grid_x in 0..16u32 {
+        for grid_y in 0..16u32 {
+            let glyph_origo_y = grid_y * glyph_height;
+            let glyph_origo_x = grid_x * glyph_width;
+            for x in 0..glyph_width {
+                for y in 0..glyph_height {
+                    let image_x = glyph_origo_x + x;
+                    let image_y = glyph_origo_y + y;
+                    let pixel: u8 = font.glyph_pixel(glyph_index, x, y).unwrap();
+                    image.put_pixel(image_y, image_x, Rgb([pixel, pixel, pixel]));
+                }
+            }
+            glyph_index += 1;
+        }
+    }
+
+    image
+}
+
+pub fn convert_font<I: AsRef<OsStr>, O: AsRef<OsStr>>(input_path: I, output_path: O) {
+    let mut file = File::open(input_path.as_ref()).unwrap();
+    let font = load_font(&mut file).unwrap();
+    let image = generate_image(&font);
+    image.save(output_path.as_ref()).unwrap();
 }
