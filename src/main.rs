@@ -23,4 +23,20 @@ fn main() {
         cli.wings_dir.join("VGAFONT1.PIC"),
         cli.output_dir.join("VGAFONT1.PNG"),
     );
+
+    // Copy to output and change file extension to .PCX
+    let pcx_files = &[
+        "WINGS2.PIC",
+        "WINGS.PIC",
+        "W_PICT2.PIC",
+        "W_PICT.PIC",
+        "W_WEAP.PIC",
+    ];
+    for file in pcx_files {
+        std::fs::copy(
+            cli.wings_dir.join(file),
+            cli.output_dir.join(file).with_extension("PCX"),
+        )
+        .unwrap();
+    }
 }
