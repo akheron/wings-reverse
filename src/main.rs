@@ -1,10 +1,12 @@
 use clap::Parser;
+use palette::load_palette;
 use std::path::PathBuf;
 
 use crate::font::convert_font;
 use crate::ship::convert_ship;
 
 mod font;
+mod palette;
 mod ship;
 
 #[derive(Parser)]
@@ -42,6 +44,8 @@ fn main() {
         .unwrap();
     }
 
+    let palette = load_palette(cli.wings_dir.join("COLORS.PCX"));
+
     if let Ok(entries) = std::fs::read_dir(cli.wings_dir.join("SHIPS")) {
         let ships_output = cli.output_dir.join("ships");
         std::fs::create_dir_all(&ships_output).unwrap();
@@ -51,6 +55,7 @@ fn main() {
             convert_ship(
                 entry.path(),
                 ships_output.join(entry.file_name()).with_extension("PNG"),
+                &palette,
             );
         }
     }

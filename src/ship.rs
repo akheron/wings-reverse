@@ -1,4 +1,4 @@
-use image::{Rgb, RgbImage};
+use image::RgbImage;
 use nom::bytes::complete::take;
 use nom::combinator::{all_consuming, map};
 use nom::multi::count;
@@ -8,6 +8,8 @@ use nom::IResult;
 use std::ffi::OsStr;
 use std::fs::File;
 use std::io::Read;
+
+use crate::palette::Palette;
 
 #[derive(Debug)]
 struct Ship {
@@ -112,7 +114,7 @@ fn load_ship<T: Read>(mut input: T) -> Option<Ship> {
     Some(ship)
 }
 
-fn generate_image(ship: &Ship) -> RgbImage {
+fn generate_image(ship: &Ship, palette: &Palette) -> RgbImage {
     let width: u32 = ship.images[0].width.into();
     let height: u32 = ship.images[0].height.into();
     let mut image = RgbImage::new(width * 72, height);
@@ -122,8 +124,8 @@ fn generate_image(ship: &Ship) -> RgbImage {
         for y in 0..height {
             for x in 0..width {
                 let index: usize = (y * width + x).try_into().unwrap();
-                let pixel = im.pixels[index];
-                image.put_pixel(x + x_offset, y, Rgb([pixel, pixel, pixel]));
+                let pixel = palette.get(im.pixels[index]);
+                image.put_pixel(x + x_offset, y, pixel);
             }
         }
         x_offset += width;
@@ -132,9 +134,13 @@ fn generate_image(ship: &Ship) -> RgbImage {
     image
 }
 
-pub fn convert_ship<I: AsRef<OsStr>, O: AsRef<OsStr>>(input_path: I, output_path: O) {
+pub fn convert_ship<I: AsRef<OsStr>, O: AsRef<OsStr>>(
+    input_path: I,
+    output_path: O,
+    palette: &Palette,
+) {
     let mut file = File::open(input_path.as_ref()).unwrap();
     let ship = load_ship(&mut file).unwrap();
-    let image = generate_image(&ship);
+    let image = generate_image(&ship, palette);
     image.save(output_path.as_ref()).unwrap();
 }
