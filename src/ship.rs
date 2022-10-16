@@ -1,9 +1,9 @@
+use crate::image::Image;
 use image::RgbImage;
 use nom::bytes::complete::take;
-use nom::combinator::{all_consuming, map};
+use nom::combinator::all_consuming;
 use nom::multi::count;
-use nom::number::complete::{le_u16, le_u32};
-use nom::sequence::tuple;
+use nom::number::complete::le_u32;
 use nom::IResult;
 use std::ffi::OsStr;
 use std::fs::File;
@@ -16,13 +16,6 @@ struct Ship {
     name: String,
     properties: [u32; 7],
     images: [Image; 72],
-}
-
-#[derive(Debug)]
-struct Image {
-    width: u16,
-    height: u16,
-    pixels: Vec<u8>,
 }
 
 fn parse_ship(start_input: &[u8]) -> IResult<&[u8], Ship> {
@@ -41,7 +34,7 @@ fn parse_ship(start_input: &[u8]) -> IResult<&[u8], Ship> {
 
     let (input, properties) = count(le_u32, 7)(input)?;
 
-    let (input, images) = all_consuming(count(parse_and_decode_image, 72))(input)?;
+    let (input, images) = all_consuming(count(Image::parse, 72))(input)?;
 
     // Make sure all images have the same dimensions
     let width = images[0].width;
@@ -63,48 +56,6 @@ fn parse_ship(start_input: &[u8]) -> IResult<&[u8], Ship> {
             images: images.try_into().unwrap(),
         },
     ))
-}
-
-fn parse_and_decode_image(start_input: &[u8]) -> IResult<&[u8], Image> {
-    let (input, (width, height, data_len)) = tuple((le_u16, le_u16, le_u32))(start_input)?;
-    let (input, pixels) = map(take(data_len), rle_decode)(input)?;
-    if pixels.len() != (width * height).into() {
-        return Err(nom::Err::Error(nom::error::Error::new(
-            start_input,
-            nom::error::ErrorKind::Verify,
-        )));
-    } else {
-        Ok((
-            input,
-            Image {
-                width,
-                height,
-                pixels,
-            },
-        ))
-    }
-}
-
-fn rle_decode(data: &[u8]) -> Vec<u8> {
-    let mut result = Vec::new();
-    let mut index = 0;
-    while index < data.len() {
-        let byte1 = data[index];
-        index += 1;
-
-        if byte1 & 0b11000000 == 0b11000000 {
-            let run_length = byte1 & 0b00111111;
-            let byte2 = data[index];
-            index += 1;
-
-            for _ in 0..run_length {
-                result.push(byte2);
-            }
-        } else {
-            result.push(byte1);
-        }
-    }
-    result
 }
 
 fn load_ship<T: Read>(mut input: T) -> Option<Ship> {

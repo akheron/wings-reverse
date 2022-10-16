@@ -77,3 +77,38 @@ name (name_length)
     data_len (4)
     rle_encoded_data (data_len)
 ```
+
+### `LEV/*.LEV`
+
+Level files.
+
+``` sh
+palette (768)
+level_image =>
+    image_width (2)
+    image_height (2)
+    data_len (4)
+    rle_encoded_data (data_len)
+is_parallax (1)
+if is_parallax =>
+    parallax_image =>
+        image_width (2)
+        image_height (2)
+        data_len (4)
+        rle_encoded_data (data_len)
+show_stars (1)
+use_defaults (1)
+if use_defaults != 2 =>
+    rain_probability (2)
+    snow_probability (2)
+    bombing_probability (2)
+    num_civilians (2)
+    armed_civilians_percentage (2)
+```
+
+`palette` consists of 256 RBG values, i.e. 768 bytes in total. Each value is
+in the range 0-63, and has to be multiplied by 4 to convert to 0-255.
+
+`parallax_image` (level background) is present only if the `is_parallax` byte equals 1.
+
+The last 5 parameter (10 bytes) are present only if the `use_defaults` byte does not equal 2.
