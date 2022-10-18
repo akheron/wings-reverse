@@ -1,9 +1,16 @@
 # Reversing Wings 1.40
 
-This is an early attempt to reverse engineer some aspects of the classic Finnish
-game [Wings](http://mvirpioj.mbnet.fi/wings/index.html) from 1990s.
+This is an early attempt to reverse engineer the classic Finnish game
+[Wings](https://en.wikipedia.org/wiki/Wings_(1996_video_game)) from 1996.
 
-Currently, the focus is to convert data files to more accessible formats.
+Download of the original game is available
+[here](http://www.jonneweb.net/pelit/file/398/wings-1.40/). It runs perfectly in
+[DOSBox](https://www.dosbox.com/).
+
+## Project status
+
+This project is currently a converter that can read the game data files and
+convert them to more accessible formats.
 
 Build:
 
@@ -17,12 +24,11 @@ Run:
 $ ./target/debug/wings-reverse <wings-dir> <output-dir>
 ```
 
+## Notes on DOSBox debugger
 
-## Notes on DosBox debugger
-
-DosBox must be built with `./configure --enable-debug` or `--enable-debug=heavy`.
+DOSBox must be built with `./configure --enable-debug` or `--enable-debug=heavy`.
 The "heavy" debugger has more memory debugging features.
-Add the following to DosBox config to make it possible to step the debugger one
+Add the following to DOSBox config to make it possible to step the debugger one
 instruction at a time:
 
 ```
@@ -30,7 +36,7 @@ instruction at a time:
 core=normal
 ```
 
-By default, DosBox uses the dynamic core if possible.
+By default, DOSBox uses the dynamic core if possible.
 It doesn't allow for instruction stepping.
 
 Run `DEBUG.COM WINGS.EXE` to break at program startup.
